@@ -16,4 +16,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('window-scale-changed', (_event, scale) => callback(scale)),
 
   resetPosition: () => ipcRenderer.send('reset-position'),
+
+  // ---- AI 对话 ----
+  sendChat: (message) => ipcRenderer.send('chat-send', message),
+
+  onChatReply: (callback) =>
+    ipcRenderer.on('chat-reply', (_event, reply) => callback(reply)),
 });

@@ -2,7 +2,7 @@
 
 ## 概述
 
-基于 Electron + PIXI.js + pixi-live2d-display 的 Windows 桌面虚拟角色应用。在桌面上渲染一个 Live2D 模型，支持动画、拖拽、点击互动和缩放。
+基于 Electron + PIXI.js + pixi-live2d-display 的 Windows 桌面虚拟角色应用。在桌面上渲染一个 Live2D 模型，支持动画、拖拽、AI 对话和缩放。接入 DeepSeek V4 API，角色以"灵梦"身份进行口语化闲聊。
 
 ## 技术栈
 
@@ -13,6 +13,8 @@
 | pixi-live2d-display | 0.4.0 | PIXI 插件，负责加载和渲染 Live2D 模型 |
 | Live2D Cubism SDK | 4.2.2 | 官方核心库，驱动模型骨骼动画/物理/眨眼 |
 | electron-store | ^8.2 | 键值存储，持久化窗口位置和缩放比例 |
+| DeepSeek API | v4 (deepseek-chat) | AI 对话引擎，OpenAI 兼容格式 |
+| Node.js https | built-in | 主进程发起 HTTPS 请求调用 DeepSeek API |
 
 ## 项目结构
 
@@ -22,13 +24,14 @@ virtual_hostess/
 ├── .gitignore
 ├── ARCHITECTURE.md           # 本文档
 ├── USAGE.md                  # 使用指南
+├── add.txt                   # 角色人设文档（灵梦的对话规则）
 ├── public/                   # 静态库文件（本地引用）
 │   ├── live2dcubismcore.min.js   # Cubism 4 核心库
 │   ├── pixi.min.js               # PIXI.js v6 浏览器构建
 │   └── cubism4.min.js            # pixi-live2d-display Cubism 4 捆绑包
 ├── src/
 │   ├── main/                 # Electron 主进程
-│   │   ├── main.js           # 入口：窗口创建、IPC 处理、生命周期
+│   │   ├── main.js           # 入口：窗口创建、IPC、API 调用、生命周期
 │   │   └── preload.js        # contextBridge：安全暴露 API 给渲染进程
 │   └── renderer/             # 渲染进程（浏览器环境）
 │       ├── index.html        # HTML 壳，引入所有脚本
@@ -83,6 +86,30 @@ new BrowserWindow({
 | `window-scale` | Renderer → Main | 改变窗口/模型缩放 |
 | `window-scale-changed` | Main → Renderer | 通知缩放已变更 |
 | `reset-position` | Renderer → Main | 重置到默认位置 |
+| `chat-send` | Renderer → Main | 发送用户消息 → 主进程调用 DeepSeek API |
+| `chat-reply` | Main → Renderer | 返回 AI 回复文本 |
+
+### AI 对话流程
+
+```
+用户点击角色 → 进入聊天模式 → 底部出现输入框
+    │
+用户输入文字 + 回车
+    │
+    ▼
+Renderer (app.js)                 Main (main.js)
+    │                                  │
+    ├─ chat-send ──────────────────→   │
+    │                                  ├─ System Prompt (灵梦人设)
+    │                                  ├─ POST https://api.deepseek.com/v1/chat/completions
+    │                                  │   model: deepseek-chat
+    │                                  │   max_tokens: 200, temperature: 0.9
+    │                                  │
+    │  ← ── chat-reply ───────────── │
+    │                                  │
+    ├─ showAIBubble(reply)             │
+    └─ 8秒后自动消失
+```
 
 ### Live2D 渲染流程
 
