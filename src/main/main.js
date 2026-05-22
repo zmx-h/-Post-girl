@@ -13,9 +13,7 @@ process.on('unhandledRejection', (reason) => {
 });
 console.log('[主进程] main.js 开始执行');
 
-console.log('[主进程] 禁用硬件加速...');
-app.disableHardwareAcceleration();
-console.log('[主进程] 硬件加速已禁用');
+console.log('[主进程] 硬件加速保持默认');
 
 // 加载用户配置
 const configPath = path.join(__dirname, '..', '..', 'config.json');
@@ -94,10 +92,11 @@ function createWindow() {
     height: h,
     x,
     y,
-    show: true,
+    show: false,
+    frame: false,
+    transparent: true,
     alwaysOnTop: true,
     skipTaskbar: false,
-    backgroundColor: '#2d2d3f',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       sandbox: false,

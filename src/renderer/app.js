@@ -4,11 +4,9 @@
 
 const { Live2DModel } = PIXI.live2d;
 
-// ---- 调试日志（显示到页面 + console）----
+// ---- 调试日志 ----
 function dbg(msg) {
   console.log(msg);
-  const el = document.getElementById('status-text');
-  if (el) el.textContent = msg;
 }
 dbg('脚本开始执行');
 
