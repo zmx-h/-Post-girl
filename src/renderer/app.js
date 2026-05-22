@@ -78,9 +78,16 @@ async function loadModel() {
 
     app.stage.addChild(model);
 
+    // 延迟重设位置，确保窗口已完成布局
+    setTimeout(() => {
+      if (model) {
+        model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
+        model.scale.set(MODEL_SCALE);
+      }
+    }, 200);
+
     setupDrag();
     setupResizeHandle();
-    setupScaleSlider();
     setupGlobalEvents();
     setupChat();
     startIdleTimer();
@@ -173,6 +180,9 @@ function setupGlobalEvents() {
   window.addEventListener('resize', () => {
     if (app && app.renderer) {
       app.renderer.resize(window.innerWidth, window.innerHeight);
+    }
+    if (model) {
+      model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
     }
   });
 
@@ -377,81 +387,23 @@ function startIdleTimer() {
 }
 
 // ============================================================
-// 缩放滑块
-// ============================================================
-let currentWinScale = 1.0;
-
-function setupScaleSlider() {
-  const panel = document.getElementById('scale-slider-panel');
-  const slider = document.getElementById('scale-slider');
-  const label = document.getElementById('scale-percent-label');
-
-  if (!panel || !slider || !label) return;
-
-  function updateTrack() {
-    const val = slider.value;
-    const pct = ((val - slider.min) / (slider.max - slider.min)) * 100;
-    slider.style.background = `linear-gradient(to right, #ff8c42 0%, #ff8c42 ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
-    label.textContent = val + '%';
-  }
-
-  slider.addEventListener('input', () => {
-    updateTrack();
-    const scale = parseInt(slider.value) / 100;
-    currentWinScale = scale;
-    window.electronAPI.scaleWindow(scale);
-    updateModelScale();
-  });
-
-  // 点击面板外关闭
-  document.addEventListener('click', (e) => {
-    if (panel.classList.contains('active') && !panel.contains(e.target)) {
-      panel.classList.remove('active');
-    }
-  });
-
-  updateTrack();
-}
-
-function toggleScaleSlider() {
-  const panel = document.getElementById('scale-slider-panel');
-  const slider = document.getElementById('scale-slider');
-  if (!panel || !slider) return;
-  if (panel.classList.contains('active')) {
-    panel.classList.remove('active');
-  } else {
-    slider.value = Math.round(currentWinScale * 100);
-    panel.classList.add('active');
-    updateSliderTrack();
-  }
-}
-
-function updateSliderTrack() {
-  const slider = document.getElementById('scale-slider');
-  const label = document.getElementById('scale-percent-label');
-  if (!slider || !label) return;
-  const val = slider.value;
-  const pct = ((val - slider.min) / (slider.max - slider.min)) * 100;
-  slider.style.background = `linear-gradient(to right, #ff8c42 0%, #ff8c42 ${pct}%, rgba(255,255,255,0.15) ${pct}%, rgba(255,255,255,0.15) 100%)`;
-  label.textContent = val + '%';
-}
-
-function updateModelScale() {
-  if (model) {
-    const scale = currentWinScale;
-    model.scale.set(MODEL_SCALE * scale);
-    model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
-  }
-}
-
-// ============================================================
 // 右键菜单
 // ============================================================
 window.electronAPI.onContextMenuAction((action) => {
   switch (action) {
-    case 'toggle-scale-slider':
-      toggleScaleSlider();
-      break;
+    case 'scale-25':  window.electronAPI.scaleWindow(0.25); break;
+    case 'scale-50':  window.electronAPI.scaleWindow(0.5); break;
+    case 'scale-60':  window.electronAPI.scaleWindow(0.6); break;
+    case 'scale-70':  window.electronAPI.scaleWindow(0.7); break;
+    case 'scale-80':  window.electronAPI.scaleWindow(0.8); break;
+    case 'scale-90':  window.electronAPI.scaleWindow(0.9); break;
+    case 'scale-100': window.electronAPI.scaleWindow(1.0); break;
+    case 'scale-110': window.electronAPI.scaleWindow(1.1); break;
+    case 'scale-120': window.electronAPI.scaleWindow(1.2); break;
+    case 'scale-130': window.electronAPI.scaleWindow(1.3); break;
+    case 'scale-150': window.electronAPI.scaleWindow(1.5); break;
+    case 'scale-175': window.electronAPI.scaleWindow(1.75); break;
+    case 'scale-200': window.electronAPI.scaleWindow(2.0); break;
     case 'reset-position':
       window.electronAPI.resetPosition();
       break;
@@ -459,8 +411,10 @@ window.electronAPI.onContextMenuAction((action) => {
 });
 
 window.electronAPI.onWindowScaleChanged((scale) => {
-  currentWinScale = scale;
-  updateModelScale();
+  if (model) {
+    model.scale.set(MODEL_SCALE * scale);
+    model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
+  }
 });
 
 // ============================================================

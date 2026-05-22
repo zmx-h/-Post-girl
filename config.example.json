@@ -12,7 +12,7 @@
 
   "window": {
     "baseWidth": 600,
-    "baseHeight": 850,
+    "baseHeight": 900,
     "defaultMarginRight": 40,
     "defaultMarginBottom": 50,
     "screenEdgeThreshold": 100

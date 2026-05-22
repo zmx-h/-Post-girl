@@ -66,13 +66,19 @@ function createWindow() {
   // 恢复上次位置，或默认右下角
   const savedX = store.get('winX');
   const savedY = store.get('winY');
-  const defaultX = screenWidth - w - marginRight;
-  const defaultY = screenHeight - h - marginBottom;
+  let defaultX = screenWidth - w - marginRight;
+  let defaultY = screenHeight - h - marginBottom;
+  // 确保窗口不超出屏幕边界
+  if (defaultX < 0) defaultX = 0;
+  if (defaultY < 0) defaultY = 0;
+  if (defaultX + w > screenWidth) defaultX = screenWidth - w;
+  if (defaultY + h > screenHeight) defaultY = screenHeight - h;
 
   // 校验保存的位置是否在当前屏幕范围内（防止外接屏拔掉后窗口跑出屏幕）
   function isOnScreen(x, y) {
-    return x + w > edgeThreshold && x < screenWidth - edgeThreshold &&
-           y > -edgeThreshold && y < screenHeight - edgeThreshold;
+    return x >= 0 && y >= 0 &&
+           x + w <= screenWidth &&
+           y + h <= screenHeight;
   }
 
   let x, y;
@@ -152,7 +158,24 @@ ipcMain.on('show-context-menu', (event) => {
   const menu = Menu.buildFromTemplate([
     { label: `桌面看板娘 — ${pct}%`, enabled: false },
     { type: 'separator' },
-    { label: '缩放设置...', click: () => event.sender.send('context-menu-action', 'toggle-scale-slider') },
+    {
+      label: '缩放比例',
+      submenu: [
+        { label: '25%',  click: () => event.sender.send('context-menu-action', 'scale-25') },
+        { label: '50%',  click: () => event.sender.send('context-menu-action', 'scale-50') },
+        { label: '60%',  click: () => event.sender.send('context-menu-action', 'scale-60') },
+        { label: '70%',  click: () => event.sender.send('context-menu-action', 'scale-70') },
+        { label: '80%',  click: () => event.sender.send('context-menu-action', 'scale-80') },
+        { label: '90%',  click: () => event.sender.send('context-menu-action', 'scale-90') },
+        { label: '100%', click: () => event.sender.send('context-menu-action', 'scale-100') },
+        { label: '110%', click: () => event.sender.send('context-menu-action', 'scale-110') },
+        { label: '120%', click: () => event.sender.send('context-menu-action', 'scale-120') },
+        { label: '130%', click: () => event.sender.send('context-menu-action', 'scale-130') },
+        { label: '150%', click: () => event.sender.send('context-menu-action', 'scale-150') },
+        { label: '175%', click: () => event.sender.send('context-menu-action', 'scale-175') },
+        { label: '200%', click: () => event.sender.send('context-menu-action', 'scale-200') },
+      ],
+    },
     { type: 'separator' },
     { label: '重置位置', click: () => event.sender.send('context-menu-action', 'reset-position') },
     { type: 'separator' },
