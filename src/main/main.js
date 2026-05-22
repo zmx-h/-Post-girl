@@ -100,8 +100,15 @@ function createWindow() {
     console.log(`${prefix} ${message}`);
   });
 
-  // 临时：始终打开 DevTools 以排查问题
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  // 捕获渲染进程未捕获的错误
+  mainWindow.webContents.on('unhandled-rejection', (event, reason) => {
+    console.error('[渲染进程未捕获Promise错误]', reason);
+  });
+
+  // 临时：如果带 --dev 标志才打开 DevTools
+  if (process.argv.includes('--dev')) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 
   // 关闭前保存位置
   mainWindow.on('close', () => {
