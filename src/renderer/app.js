@@ -4,20 +4,22 @@
 
 const { Live2DModel } = PIXI.live2d;
 
-const MODEL_URL = '../../assets/kalabiqiu/卡拉.model3.json';
+// ---- 从配置读取参数 ----
+const modelConfig = window.electronAPI.getModelConfig();
+const charConfig = window.electronAPI.getCharacterConfig();
+const chatConfig = window.electronAPI.getChatConfig();
 
-const BUBBLE_TEXTS = [
-  '诶嘿~', '怎么了？', '你好呀！', '❤', '别戳我~', '嘻嘻',
-  '有什么事吗？', '加油哦！', '✨', '我在呢', '好无聊啊~',
-  '戳戳戳！', '啊！', '嗯？', '今天也要开心哦', '♪',
-];
-
-// 负面情绪关键词（治愈模式检测）
-const NEGATIVE_KEYWORDS = [
-  '烦', '累', '难过', '伤心', '哭', '崩溃', '无聊', '郁闷', 'emo',
-  '不开心', '压力', '焦虑', '生气', '讨厌', '失败', '好难', '不想',
-  '唉', '算了', '没意思', '好累', '心累', '难受', '迷茫', '孤独',
-];
+const MODEL_URL = modelConfig ? modelConfig.path : '../../assets/kalabiqiu/卡拉.model3.json';
+const MODEL_SCALE = modelConfig ? modelConfig.scale : 0.18;
+const MODEL_ANCHOR_X = modelConfig ? modelConfig.anchorX : 0.5;
+const MODEL_ANCHOR_Y = modelConfig ? modelConfig.anchorY : 0.5;
+const MODEL_POS_RATIO_X = modelConfig ? modelConfig.positionRatioX : 0.5;
+const MODEL_POS_RATIO_Y = modelConfig ? modelConfig.positionRatioY : 0.58;
+const BUBBLE_TEXTS = charConfig ? charConfig.bubbleTexts : [];
+const NEGATIVE_KEYWORDS = charConfig ? charConfig.negativeKeywords : [];
+const GREETING_MORNING = charConfig ? charConfig.greetingMorning : null;
+const GREETING_NIGHT = charConfig ? charConfig.greetingNight : null;
+const REPLY_DURATION = chatConfig ? chatConfig.replyDuration : 8000;
 
 let model = null;
 let app = null;
@@ -27,7 +29,7 @@ let dragStart = { sx: 0, sy: 0 };
 // ---- AI 对话状态 ----
 let isChatMode = false;
 let isWaitingReply = false;
-let recentNegativeCount = 0;      // 连续负面消息计数
+let recentNegativeCount = 0;
 let greetTimerStarted = false;
 
 // ============================================================
@@ -48,22 +50,28 @@ async function initPixi() {
 // 加载模型
 // ============================================================
 async function loadModel() {
-  model = await Live2DModel.from(MODEL_URL);
+  try {
+    model = await Live2DModel.from(MODEL_URL);
 
-  model.anchor.set(0.5, 0.5);
-  model.scale.set(0.18);
-  model.position.set(window.innerWidth / 2, window.innerHeight * 0.58);
-  model.interactive = true;
-  model.cursor = 'default';
+    model.anchor.set(MODEL_ANCHOR_X, MODEL_ANCHOR_Y);
+    model.scale.set(MODEL_SCALE);
+    model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
+    model.interactive = true;
+    model.cursor = 'default';
 
-  app.stage.addChild(model);
+    app.stage.addChild(model);
 
-  setupDrag();
-  setupGlobalEvents();
-  setupChat();
-  startIdleTimer();
-  checkTimeGreeting();
-  console.log('Live2D 模型加载成功! AI 对话已就绪');
+    setupDrag();
+    setupGlobalEvents();
+    setupChat();
+    startIdleTimer();
+    checkTimeGreeting();
+    console.log('Live2D 模型加载成功! AI 对话已就绪');
+  } catch (err) {
+    console.error('模型加载失败:', err);
+    document.getElementById('reaction-bubble').textContent = '模型加载失败了…请检查 model.path 配置';
+    document.getElementById('reaction-bubble').classList.add('show');
+  }
 }
 
 // ============================================================
@@ -74,7 +82,6 @@ function setupDrag() {
 
   canvas.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    // 如果处于聊天模式，先退出
     if (isChatMode) exitChatMode();
     isDragging = false;
     dragStart = { sx: e.screenX, sy: e.screenY };
@@ -149,9 +156,9 @@ function checkTimeGreeting() {
   let greeting = null;
 
   if (hour >= 6 && hour < 9) {
-    greeting = '早安~前辈今天也要元气满满哦，灵梦泡了虚拟茶，请用 (´▽｀)ノ♪';
+    greeting = GREETING_MORNING;
   } else if (hour >= 22 || hour < 2) {
-    greeting = '唔…灵梦有点困了，但会陪前辈到睡着为止…呼啊~';
+    greeting = GREETING_NIGHT;
   }
 
   if (greeting) {
@@ -200,16 +207,13 @@ function setupChat() {
 
   // 接收 AI 回复
   window.electronAPI.onChatReply((reply) => {
-    // 停止等待动画
     const bubble = document.getElementById('ai-bubble');
     bubble.textContent = '';
     bubble.classList.remove('show');
 
-    // 显示 AI 回复
     showAIBubble(reply);
     isWaitingReply = false;
 
-    // 播放反应动作
     try { model.motion('tap_body'); } catch (e) {}
   });
 }
@@ -239,12 +243,10 @@ function sendChatMessage() {
 
   input.value = '';
 
-  // 检查治愈模式
   if (checkHealingMode(text)) {
     recentNegativeCount = 0;
   }
 
-  // 显示"思考中"
   const aiBubble = document.getElementById('ai-bubble');
   aiBubble.textContent = '…';
   aiBubble.style.left = '50%';
@@ -252,7 +254,6 @@ function sendChatMessage() {
   aiBubble.classList.add('show');
   isWaitingReply = true;
 
-  // 通过 IPC 发给主进程调用 DeepSeek API
   window.electronAPI.sendChat(text);
 }
 
@@ -267,11 +268,10 @@ function showAIBubble(text) {
   bubble.style.top = '8%';
   bubble.classList.add('show');
 
-  // 8 秒后自动消失
   clearTimeout(bubble._timeout);
   bubble._timeout = setTimeout(() => {
     bubble.classList.remove('show');
-  }, 8000);
+  }, REPLY_DURATION);
 }
 
 // ============================================================
@@ -289,6 +289,7 @@ function showBubble(text) {
 }
 
 function randomBubbleText() {
+  if (!BUBBLE_TEXTS.length) return '诶嘿~';
   return BUBBLE_TEXTS[Math.floor(Math.random() * BUBBLE_TEXTS.length)];
 }
 
@@ -325,8 +326,8 @@ window.electronAPI.onContextMenuAction((action) => {
 
 window.electronAPI.onWindowScaleChanged((scale) => {
   if (model) {
-    model.scale.set(0.18 * scale);
-    model.position.set(window.innerWidth / 2, window.innerHeight * 0.58);
+    model.scale.set(MODEL_SCALE * scale);
+    model.position.set(window.innerWidth * MODEL_POS_RATIO_X, window.innerHeight * MODEL_POS_RATIO_Y);
   }
 });
 

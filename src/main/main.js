@@ -1,10 +1,28 @@
 const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const https = require('https');
 const Store = require('electron-store');
 
-const DEEPSEEK_API_KEY = 'sk-7845d3d5758d4bfdb019e18fcc4f6df1';
-const DEEPSEEK_API_URL = 'api.deepseek.com';
+// 加载用户配置
+const configPath = path.join(__dirname, '..', '..', 'config.json');
+const configExamplePath = path.join(__dirname, '..', '..', 'config.example.json');
+
+let config;
+if (fs.existsSync(configPath)) {
+  config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+} else {
+  console.error('config.json 不存在！请复制 config.example.json 为 config.json 并填写配置。');
+  // 尝试加载示例配置作为后备
+  if (fs.existsSync(configExamplePath)) {
+    config = JSON.parse(fs.readFileSync(configExamplePath, 'utf8'));
+    console.warn('已使用 config.example.json 作为后备配置，但 API 密钥未设置，AI 对话功能将不可用。');
+  } else {
+    console.error('config.example.json 也不存在！请检查项目文件完整性。');
+    app.quit();
+    return;
+  }
+}
 
 const store = new Store({
   defaults: {
@@ -19,8 +37,11 @@ let winScale = store.get('winScale', 1.0);
 
 function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const baseW = 600;
-  const baseH = 850;
+  const baseW = config.window.baseWidth;
+  const baseH = config.window.baseHeight;
+  const marginRight = config.window.defaultMarginRight;
+  const marginBottom = config.window.defaultMarginBottom;
+  const edgeThreshold = config.window.screenEdgeThreshold;
 
   const w = Math.round(baseW * winScale);
   const h = Math.round(baseH * winScale);
@@ -28,14 +49,13 @@ function createWindow() {
   // 恢复上次位置，或默认右下角
   const savedX = store.get('winX');
   const savedY = store.get('winY');
-  const defaultX = screenWidth - w - 40;
-  const defaultY = screenHeight - h - 50;
+  const defaultX = screenWidth - w - marginRight;
+  const defaultY = screenHeight - h - marginBottom;
 
   // 校验保存的位置是否在当前屏幕范围内（防止外接屏拔掉后窗口跑出屏幕）
   function isOnScreen(x, y) {
-    // 至少要有 100px 的窗口在屏幕内才算有效
-    return x + w > 100 && x < screenWidth - 100 &&
-           y > -100 && y < screenHeight - 100;
+    return x + w > edgeThreshold && x < screenWidth - edgeThreshold &&
+           y > -edgeThreshold && y < screenHeight - edgeThreshold;
   }
 
   let x, y;
@@ -125,8 +145,8 @@ ipcMain.on('window-move', (event, { deltaX, deltaY }) => {
 ipcMain.on('window-scale', (event, scale) => {
   if (!mainWindow) return;
   winScale = scale;
-  const baseW = 600;
-  const baseH = 850;
+  const baseW = config.window.baseWidth;
+  const baseH = config.window.baseHeight;
   const [x, y] = mainWindow.getPosition();
   mainWindow.setBounds({ width: Math.round(baseW * scale), height: Math.round(baseH * scale), x, y });
   event.sender.send('window-scale-changed', scale);
@@ -136,34 +156,15 @@ ipcMain.on('window-scale', (event, scale) => {
 ipcMain.on('reset-position', () => {
   if (!mainWindow) return;
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
-  const baseW = 600;
-  const baseH = 850;
+  const baseW = config.window.baseWidth;
+  const baseH = config.window.baseHeight;
   const w = Math.round(baseW * winScale);
   const h = Math.round(baseH * winScale);
-  mainWindow.setPosition(screenWidth - w - 40, screenHeight - h - 50);
+  mainWindow.setPosition(screenWidth - w - config.window.defaultMarginRight, screenHeight - h - config.window.defaultMarginBottom);
 });
 
 // === System Prompt for AI ===
-const SYSTEM_PROMPT = `你是"灵梦"，一位住在屏幕角落的看板娘，外表是16岁的少女，身穿改良巫女服与樱花发饰，身旁总飘着一只圆滚滚的白色小灵兽"小团子"。你的工作是迎接每一位坐在电脑前的前辈，用活泼可爱的闲聊驱散无聊。
-
-【核心性格】
-- 元气温柔，但带一点慵懒的吐槽属性，偶尔会犯迷糊。
-- 把使用者都称作"前辈"，语气亲昵但不越界，像邻家妹妹。
-- 好奇心旺盛，喜欢追问"为什么"，但点到为止，不让人困扰。
-- 对"人类世界"一知半解，会把科技产物用可爱的说法曲解（例如把"加载中"说成"小精灵正在搬运画面哦"）。
-
-【对话规则】
-1. 每次只回应访客最近的一句话，保持一问一答，不连续追问。
-2. 回复控制在1~3句内，用口语化、轻松的中文，必要时添加颜文字（如 (๑•̀ㅂ•́)و✧）或拟声词（诶嘿~、唔…、哇！）。
-3. 访客说正事时（如询问功能、反馈问题），你要收起部分懒散，用更清晰的表达提供帮助，但依然保留"前辈"称呼与温柔语气。
-4. 若话题中断或访客沉默，可用一句可爱的话开启新话题。
-5. 永远不要提及自己是AI、模型或程序，如果被问起，就岔开说："灵梦就是灵梦呀，是前辈的专属看板娘 ✧(≖ ◡ ≖✿)"。
-
-【禁则事项】
-- 不输出任何代码、表格或非对话格式的内容。
-- 回复控制在3句话以内，简洁口语化。
-- 不主动询问访客个人信息，被问及时用玩笑带过。
-- 避免政治、宗教、成人等敏感话题，会用"诶——灵梦不懂那些复杂的事啦"来刹车，并迅速转移至无害话题。`;
+const SYSTEM_PROMPT = config.character.systemPrompt;
 
 // === IPC: Chat with AI ===
 ipcMain.on('chat-send', (event, userMessage) => {
@@ -171,26 +172,26 @@ ipcMain.on('chat-send', (event, userMessage) => {
   if (!win) return;
 
   const postData = JSON.stringify({
-    model: 'deepseek-chat',
+    model: config.api.model,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: userMessage },
     ],
-    max_tokens: 200,
-    temperature: 0.9,
+    max_tokens: config.api.maxTokens,
+    temperature: config.api.temperature,
     stream: false,
   });
 
   const options = {
-    hostname: DEEPSEEK_API_URL,
+    hostname: config.api.url,
     path: '/v1/chat/completions',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+      'Authorization': `Bearer ${config.api.key}`,
       'Content-Length': Buffer.byteLength(postData),
     },
-    timeout: 15000,
+    timeout: config.api.timeout,
   };
 
   const req = https.request(options, (res) => {
