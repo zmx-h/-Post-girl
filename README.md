@@ -25,7 +25,9 @@
 git clone https://github.com/zmx-h/-Post-girl.git
 cd Post-girl
 
-# 2. 安装依赖
+# 2. 安装依赖（国内用户可设置镜像加速）
+#    Windows PowerShell: $env:ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/"
+#    Windows CMD:        set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 npm install
 
 # 3. 配置（首次使用需要）
