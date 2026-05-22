@@ -19,7 +19,8 @@
   },
 
   "model": {
-    "path": "./assets/kalabiqiu/卡拉.model3.json",
+    "path": "../../assets/kalabiqiu/卡拉.model3.json",
+    "_path说明": "相对于 src/renderer/index.html 的位置。例如: ../../assets/你的模型/你的模型.model3.json",
     "scale": 0.18,
     "anchor": { "x": 0.5, "y": 0.5 },
     "positionRatio": { "x": 0.5, "y": 0.58 }

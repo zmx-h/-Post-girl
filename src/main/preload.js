@@ -1,7 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
 
 // 加载配置（供渲染进程使用）
 function loadConfig() {
@@ -44,15 +43,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ---- 配置（只暴露渲染进程需要的部分） ----
   getModelConfig: () => {
     if (!config) return null;
-    // 将模型路径解析为绝对路径（相对于项目根目录）
-    const relPath = config.model.path;
-    const absPath = path.isAbsolute(relPath)
-      ? relPath
-      : path.resolve(__dirname, '..', '..', relPath);
-    // 转为 file:// URL（正确编码中文等字符）
-    const fileUrl = pathToFileURL(absPath).href;
     return {
-      path: fileUrl,
+      path: config.model.path,
       scale: config.model.scale,
       anchorX: config.model.anchor.x,
       anchorY: config.model.anchor.y,
