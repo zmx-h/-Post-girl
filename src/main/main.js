@@ -4,10 +4,8 @@ const fs = require('fs');
 const https = require('https');
 const Store = require('electron-store');
 
-// 透明窗口兼容性设置（必须在 app.whenReady 之前）
+// 禁用 GPU 加速以排查渲染问题
 app.disableHardwareAcceleration();
-app.commandLine.appendSwitch('enable-transparent-visuals');
-app.commandLine.appendSwitch('no-sandbox');
 
 // 加载用户配置
 const configPath = path.join(__dirname, '..', '..', 'config.json');
@@ -80,13 +78,10 @@ function createWindow() {
     height: h,
     x: x,
     y: y,
-    transparent: true,
-    frame: false,
     alwaysOnTop: true,
-    skipTaskbar: true,
+    skipTaskbar: false,
     resizable: false,
-    hasShadow: false,
-    backgroundColor: '#00000000',
+    backgroundColor: '#2d2d3f',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
