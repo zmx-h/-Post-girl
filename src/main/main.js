@@ -5,8 +5,9 @@ const https = require('https');
 const Store = require('electron-store');
 
 // 透明窗口兼容性设置（必须在 app.whenReady 之前）
+app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('enable-transparent-visuals');
-app.commandLine.appendSwitch('use-gl', 'swiftshader');
+app.commandLine.appendSwitch('no-sandbox');
 
 // 加载用户配置
 const configPath = path.join(__dirname, '..', '..', 'config.json');
