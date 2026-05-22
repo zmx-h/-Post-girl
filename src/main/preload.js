@@ -36,8 +36,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   resizeWindow: (newHeight) => ipcRenderer.send('window-resize-height', newHeight),
 
-  // ---- AI 对话 ----
+  // ---- AI 对话（流式） ----
   sendChat: (message) => ipcRenderer.send('chat-send', message),
+
+  onChatReplyChunk: (callback) =>
+    ipcRenderer.on('chat-reply-chunk', (_event, chunk) => callback(chunk)),
+
+  onChatReplyDone: (callback) =>
+    ipcRenderer.on('chat-reply-done', () => callback()),
 
   onChatReply: (callback) =>
     ipcRenderer.on('chat-reply', (_event, reply) => callback(reply)),

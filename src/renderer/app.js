@@ -40,6 +40,7 @@ let isChatMode = false;
 let isWaitingReply = false;
 let recentNegativeCount = 0;
 let greetTimerStarted = false;
+let streamBuffer = '';
 
 // ============================================================
 // PIXI 初始化
@@ -238,8 +239,6 @@ function checkHealingMode(text) {
 function setupChat() {
   const input = document.getElementById('chat-input');
   const sendBtn = document.getElementById('chat-send-btn');
-
-  // 发送按钮
   sendBtn.addEventListener('click', () => sendChatMessage());
 
   // 回车发送
@@ -255,15 +254,32 @@ function setupChat() {
     }
   });
 
-  // 接收 AI 回复
+  // 接收流式 AI 回复 chunk
+  window.electronAPI.onChatReplyChunk((chunk) => {
+    streamBuffer += chunk;
+    const bubble = document.getElementById('ai-bubble');
+    if (bubble) {
+      bubble.textContent = streamBuffer;
+      bubble.style.left = '54%';
+      bubble.style.top = '18%';
+      bubble.classList.add('show');
+    }
+  });
+
+  // 流式回复完成
+  window.electronAPI.onChatReplyDone(() => {
+    isWaitingReply = false;
+    try { model.motion('tap_body'); } catch (e) {}
+  });
+
+  // 接收非流式 AI 回复（错误/回退场景）
   window.electronAPI.onChatReply((reply) => {
     const bubble = document.getElementById('ai-bubble');
     bubble.textContent = '';
     bubble.classList.remove('show');
-
+    streamBuffer = '';
     showAIBubble(reply);
     isWaitingReply = false;
-
     try { model.motion('tap_body'); } catch (e) {}
   });
 }
@@ -304,6 +320,8 @@ function sendChatMessage() {
   aiBubble.classList.add('show');
   isWaitingReply = true;
 
+  // 重置流式缓冲区，开始新的回复
+  streamBuffer = '';
   window.electronAPI.sendChat(text);
 }
 

@@ -202,7 +202,7 @@ ipcMain.on('reset-position', () => {
 // === System Prompt for AI ===
 const SYSTEM_PROMPT = config.character.systemPrompt;
 
-// === IPC: Chat with AI ===
+// === IPC: Chat with AI (Streaming) ===
 ipcMain.on('chat-send', (event, userMessage) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
@@ -215,7 +215,7 @@ ipcMain.on('chat-send', (event, userMessage) => {
     ],
     max_tokens: config.api.maxTokens,
     temperature: config.api.temperature,
-    stream: false,
+    stream: true,
   });
 
   const options = {
@@ -231,21 +231,40 @@ ipcMain.on('chat-send', (event, userMessage) => {
   };
 
   const req = https.request(options, (res) => {
-    let body = '';
-    res.on('data', (chunk) => { body += chunk; });
-    res.on('end', () => {
-      try {
-        const json = JSON.parse(body);
-        if (json.choices && json.choices[0] && json.choices[0].message) {
-          event.sender.send('chat-reply', json.choices[0].message.content);
-        } else if (json.error) {
-          event.sender.send('chat-reply', '唔…前辈，灵梦的脑袋好像卡住了一下 (´;ω;`) 请稍后再试试吧~');
-          console.error('DeepSeek API error:', json.error);
+    let buffer = '';
+
+    res.on('data', (chunk) => {
+      buffer += chunk.toString();
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') {
+          event.sender.send('chat-reply-done');
+          return;
         }
-      } catch (e) {
-        console.error('Failed to parse API response:', e);
-        event.sender.send('chat-reply', '诶嘿~ 灵梦刚才走神了，前辈再说一次好不好？(๑•́ω•̀๑)');
+        try {
+          const json = JSON.parse(data);
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) {
+            event.sender.send('chat-reply-chunk', delta);
+          }
+        } catch (e) {
+          // 跳过无法解析的 chunk
+        }
       }
+    });
+
+    res.on('end', () => {
+      event.sender.send('chat-reply-done');
+    });
+
+    res.on('error', (err) => {
+      console.error('Stream error:', err);
+      event.sender.send('chat-reply', '唔…前辈，灵梦的脑袋好像卡住了一下 (´;ω;`) 请稍后再试试吧~');
     });
   });
 
