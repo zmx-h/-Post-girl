@@ -13,5 +13,11 @@ assets/
 # 环境变量文件
 .env
 
+# 截图/图片
+*.png
+*.jpg
+*.jpeg
+*.gif
+
 # Claude Code 工作目录
 .claude/

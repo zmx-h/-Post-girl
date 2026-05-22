@@ -5,9 +5,9 @@
 ## 功能特性
 
 - **Live2D 模型渲染** — 加载任意 Live2D Cubism 4 模型，支持物理效果、自动眨眼、呼吸动画
-- **AI 智能对话** — 接入 DeepSeek API，角色会以设定的人设与你闲聊
-- **桌面拖拽** — 按住角色拖到桌面任意位置
-- **缩放调节** — 右键菜单调整角色大小（50% ~ 150%）
+- **AI 流式对话** — 接入 DeepSeek API，角色以设定人设用打字机效果逐字回复
+- **桌面拖拽** — 按住角色拖到桌面任意位置，窗口顶部边缘可拖拽调整高度
+- **缩放调节** — 右键菜单 13 档缩放（25% ~ 200%）
 - **位置记忆** — 关闭后自动保存位置和缩放比例
 - **时段问候** — 早上和深夜自动问候
 - **治愈模式** — 检测到负面情绪时自动切换暖心语气
@@ -59,16 +59,16 @@ npm start
   },
   "window": {
     "baseWidth": 600,                  // 窗口基础宽度
-    "baseHeight": 850,                 // 窗口基础高度
+    "baseHeight": 900,                 // 窗口基础高度
     "defaultMarginRight": 40,          // 默认右下角距右边缘距离
     "defaultMarginBottom": 50,         // 默认右下角距下边缘距离
     "screenEdgeThreshold": 100         // 窗口边缘检测阈值（防止跑出屏幕）
   },
   "model": {
-    "path": "./assets/kalabiqiu/卡拉.model3.json",  // 模型入口文件路径
+    "path": "../../assets/kalabiqiu/卡拉.model3.json",  // 模型入口文件路径（相对于 src/renderer/index.html）
     "scale": 0.18,                    // 模型显示大小（根据模型调整）
     "anchor": { "x": 0.5, "y": 0.5 }, // 模型锚点（0~1）
-    "positionRatio": { "x": 0.5, "y": 0.58 }  // 在窗口中的位置比例
+    "positionRatio": { "x": 0.5, "y": 0.5 }  // 在窗口中的位置比例
   },
   "character": {
     "name": "灵梦",                    // 角色名字
@@ -92,7 +92,7 @@ npm start
 3. 在 API Keys 页面创建新的 API Key
 4. 复制 key 填入 `config.json` 的 `api.key` 字段
 
-> **注意**：`config.json` 包含你的 API 密钥，已加入 `.gitignore`，不会提交到 Git。请勿将密钥直接写在代码中。
+> **关于 API 密钥**：你的 DeepSeek API 密钥仅存在于 `config.json` 中，该文件已在 `.gitignore` 中排除，**不会被上传到 GitHub**。仓库中的 `config.example.json` 仅包含占位文本，可安全提交。如果你通过其他方式（如将 `config.json` 误上传）泄露了密钥，请及时前往 DeepSeek 开放平台删除该密钥并重新生成。
 
 ## 替换模型
 
@@ -130,6 +130,10 @@ npm start
 | `model.scale` | 模型大小 | 0.1 ~ 0.5（根据模型尺寸调整） |
 | `model.positionRatio.y` | 模型在窗口中的垂直位置 | 0.5 ~ 0.7（越大越靠下） |
 | `window.baseWidth/baseHeight` | 窗口大小 | 根据模型比例调整 |
+
+### 当前模型说明
+
+本项目默认配置使用的「卡拉」模型素材来自网络，角色出自游戏《卡拉比丘》。模型文件未上传至仓库（已在 `.gitignore` 中排除），仅作学习研究用途。如有侵权，请联系删除。
 
 ### Live2D 模型资源
 
