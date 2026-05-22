@@ -94,9 +94,14 @@ function createWindow() {
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.setVisibleOnAllWorkspaces(true);
 
-  if (process.argv.includes('--dev')) {
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
-  }
+  // 捕获渲染进程控制台日志，输出到终端
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    const prefix = level === 2 ? '[渲染进程错误]' : level === 3 ? '[渲染进程警告]' : '[渲染进程日志]';
+    console.log(`${prefix} ${message}`);
+  });
+
+  // 临时：始终打开 DevTools 以排查问题
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   // 关闭前保存位置
   mainWindow.on('close', () => {

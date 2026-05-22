@@ -4,10 +4,21 @@
 
 const { Live2DModel } = PIXI.live2d;
 
+// ---- 调试日志（显示到页面 + console）----
+function dbg(msg) {
+  console.log(msg);
+  const el = document.getElementById('status-text');
+  if (el) el.textContent = msg;
+}
+dbg('脚本开始执行');
+
 // ---- 从配置读取参数 ----
 const modelConfig = window.electronAPI.getModelConfig();
 const charConfig = window.electronAPI.getCharacterConfig();
 const chatConfig = window.electronAPI.getChatConfig();
+
+if (modelConfig) dbg('模型路径: ' + modelConfig.path);
+else dbg('警告: modelConfig 为空');
 
 const MODEL_URL = modelConfig ? modelConfig.path : '../../assets/kalabiqiu/卡拉.model3.json';
 const MODEL_SCALE = modelConfig ? modelConfig.scale : 0.18;
@@ -36,22 +47,29 @@ let greetTimerStarted = false;
 // PIXI 初始化
 // ============================================================
 async function initPixi() {
+  dbg('初始化 PIXI...');
+  const canvas = document.getElementById('live2d-canvas');
+  if (!canvas) { dbg('错误: 找不到 canvas 元素!'); return; }
+  dbg('canvas 尺寸: ' + canvas.width + 'x' + canvas.height);
   app = new PIXI.Application({
-    view: document.getElementById('live2d-canvas'),
+    view: canvas,
     backgroundAlpha: 0,
     resizeTo: window,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
   });
+  dbg('PIXI 初始化完成');
 }
 
 // ============================================================
 // 加载模型
 // ============================================================
 async function loadModel() {
+  dbg('正在加载模型: ' + MODEL_URL);
   try {
     model = await Live2DModel.from(MODEL_URL);
+    dbg('模型加载成功');
 
     model.anchor.set(MODEL_ANCHOR_X, MODEL_ANCHOR_Y);
     model.scale.set(MODEL_SCALE);
@@ -66,10 +84,12 @@ async function loadModel() {
     setupChat();
     startIdleTimer();
     checkTimeGreeting();
-    console.log('Live2D 模型加载成功! AI 对话已就绪');
+    dbg('Live2D 模型加载成功! AI 对话已就绪');
   } catch (err) {
+    const errMsg = '模型加载失败: ' + (err.message || err);
+    dbg(errMsg);
     console.error('模型加载失败:', err);
-    document.getElementById('reaction-bubble').textContent = '模型加载失败了…请检查 model.path 配置';
+    document.getElementById('reaction-bubble').textContent = errMsg;
     document.getElementById('reaction-bubble').classList.add('show');
   }
 }
