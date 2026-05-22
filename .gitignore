@@ -12,3 +12,6 @@ assets/
 
 # 环境变量文件
 .env
+
+# Claude Code 工作目录
+.claude/
