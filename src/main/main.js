@@ -152,16 +152,7 @@ ipcMain.on('show-context-menu', (event) => {
   const menu = Menu.buildFromTemplate([
     { label: `桌面看板娘 — ${pct}%`, enabled: false },
     { type: 'separator' },
-    {
-      label: '缩放比例',
-      submenu: [
-        { label: '50%',  click: () => event.sender.send('context-menu-action', 'scale-50') },
-        { label: '75%',  click: () => event.sender.send('context-menu-action', 'scale-75') },
-        { label: '100%', click: () => event.sender.send('context-menu-action', 'scale-100') },
-        { label: '125%', click: () => event.sender.send('context-menu-action', 'scale-125') },
-        { label: '150%', click: () => event.sender.send('context-menu-action', 'scale-150') },
-      ],
-    },
+    { label: '缩放设置...', click: () => event.sender.send('context-menu-action', 'toggle-scale-slider') },
     { type: 'separator' },
     { label: '重置位置', click: () => event.sender.send('context-menu-action', 'reset-position') },
     { type: 'separator' },

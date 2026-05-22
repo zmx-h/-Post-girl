@@ -116,6 +116,85 @@
       background: rgba(255,255,255,0.35);
     }
 
+    /* 缩放滑块面板 */
+    #scale-slider-panel {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      background: rgba(30, 30, 40, 0.85);
+      border-radius: 20px;
+      padding: 10px 22px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      min-width: 280px;
+    }
+    #scale-slider-panel.active {
+      display: flex;
+    }
+    #scale-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.15);
+      outline: none;
+      cursor: pointer;
+    }
+    #scale-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ff8c42;
+      cursor: grab;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(255,140,66,0.5);
+    }
+    #scale-slider::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      background: #ff6d1a;
+    }
+    /* 橘黄色轨道（滑块左侧） */
+    #scale-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 3px;
+      background: transparent;
+    }
+    /* Firefox 滑块样式 */
+    #scale-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ff8c42;
+      cursor: grab;
+      border: 2px solid #fff;
+    }
+    #scale-slider::-moz-range-progress {
+      height: 6px;
+      border-radius: 3px;
+      background: #ff8c42;
+    }
+    #scale-slider::-moz-range-track {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.15);
+    }
+    #scale-percent-label {
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Microsoft YaHei', sans-serif;
+      min-width: 42px;
+      text-align: center;
+      font-weight: bold;
+    }
+
     /* 顶部调整大小手柄 */
     #resize-top {
       position: fixed;
@@ -139,6 +218,14 @@
 </head>
 <body>
   <div id="resize-top"></div>
+
+  <!-- 缩放滑块 -->
+  <div id="scale-slider-panel">
+    <span style="color:#aaa;font-size:13px;font-family:'Microsoft YaHei',sans-serif;">🔍</span>
+    <input type="range" id="scale-slider" min="30" max="150" value="100" step="1">
+    <span id="scale-percent-label">100%</span>
+  </div>
+
   <canvas id="live2d-canvas"></canvas>
   <div id="reaction-bubble"></div>
   <div id="ai-bubble"></div>
