@@ -7,8 +7,9 @@ dist/
 # 用户配置（含 API key、模型路径等）
 config.json
 
-# 模型文件（太大，请手动下载或自行放置）
-assets/
+# 模型文件（含 Live2D 建模资源）
+# 如需排除模型，取消下面注释：
+# assets/
 
 # 环境变量文件
 .env
