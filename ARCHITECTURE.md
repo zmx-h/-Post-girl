@@ -22,9 +22,10 @@
 virtual_hostess/
 ├── package.json              # 项目配置和依赖
 ├── .gitignore
+├── README.md                 # 项目文档
 ├── ARCHITECTURE.md           # 本文档
-├── USAGE.md                  # 使用指南
-├── add.txt                   # 角色人设文档（灵梦的对话规则）
+├── config.example.json       # 配置模板（提交到 git）
+├── config.json               # 用户配置（已 .gitignore，含 API key）
 ├── public/                   # 静态库文件（本地引用）
 │   ├── live2dcubismcore.min.js   # Cubism 4 核心库
 │   ├── pixi.min.js               # PIXI.js v6 浏览器构建
@@ -142,6 +143,18 @@ index.html
 - **右键菜单**：`contextmenu` 事件 → IPC → 主进程 `Menu.buildFromTemplate` → 原生菜单
 - **待机动作**：`setTimeout` 循环，每 12-30 秒随机播放 `idle_01` 动作
 
+## 配置系统
+
+所有可配置项集中在 `config.json`（在 `.gitignore` 中排除，不提交到 git）:
+
+- **API 设置**: key, url, model, maxTokens, temperature, timeout
+- **窗口设置**: baseWidth, baseHeight, defaultMarginRight, defaultMarginBottom
+- **模型设置**: path, scale, anchor, positionRatio
+- **角色设置**: name, systemPrompt, greetingMorning/Night, bubbleTexts, negativeKeywords
+- **聊天设置**: replyDuration, inputMaxLength
+
+详见 `config.example.json`（提交到 git 的配置模板）。
+
 ## 关键设计决策
 
 ### 为什么用原生 DOM 事件而不是 PIXI 事件做拖拽？
@@ -150,12 +163,9 @@ PIXI 交互事件的 `e.data.originalEvent` 在不同版本的 pixi-live2d-displ
 
 ### 为什么基础窗口是 600×850？
 
-Haru 模型的宽高比约为 2:3，600×850 能完整容纳角色全身，避免头脚裁切。
-
-### 为什么模型缩放是 0.20？
-
-在 600×850 窗口中，模型 scale=0.20 能完整显示角色且有适当留白。
+当前模型宽高比约为 2:3，600×850 能完整容纳角色全身，避免头脚裁切。
+可在 `config.json` 的 `window.baseWidth/baseHeight` 中调整。
 
 ### 为什么不使用动态 click-through？
 
-透明窗口的像素级点击穿透需要复杂的碰撞检测。保持窗口始终可交互更稳定，代价是 600×850 区域内的桌面图标不可点击。
+透明窗口的像素级点击穿透需要复杂的碰撞检测。保持窗口始终可交互更稳定，代价是窗口区域内的桌面图标不可点击。
