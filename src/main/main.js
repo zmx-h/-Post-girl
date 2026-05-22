@@ -239,6 +239,14 @@ ipcMain.on('chat-send', (event, userMessage) => {
   req.end();
 });
 
+// === 全局错误处理 ===
+process.on('uncaughtException', (err) => {
+  console.error('[未捕获异常]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[未处理Promise拒绝]', reason);
+});
+
 // === App Lifecycle ===
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -251,7 +259,11 @@ if (!gotLock) {
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady()
+    .then(createWindow)
+    .catch((err) => {
+      console.error('[窗口创建失败]', err);
+    });
 
   app.on('window-all-closed', () => {
     app.quit();
