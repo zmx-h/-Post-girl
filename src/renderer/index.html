@@ -33,7 +33,6 @@
       font-family: 'Microsoft YaHei', sans-serif;
       white-space: nowrap;
       opacity: 0;
-      transform: translate(-50%, -50%);
       transition: none;
       z-index: 10;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -42,7 +41,7 @@
       animation: bubble-pop 2s ease-out forwards;
     }
 
-    /* AI 回复气泡（多行，长文本） */
+    /* AI 回复气泡（多行，长文本，显示在角色右侧） */
     #ai-bubble {
       position: fixed;
       pointer-events: none;
@@ -52,12 +51,11 @@
       padding: 10px 16px;
       font-size: 14px;
       font-family: 'Microsoft YaHei', sans-serif;
-      max-width: 300px;
+      max-width: 260px;
       line-height: 1.6;
       opacity: 0;
       z-index: 11;
       box-shadow: 0 3px 12px rgba(0,0,0,0.18);
-      transform: translateX(-50%);
       transition: opacity 0.3s;
     }
     #ai-bubble.show {
@@ -208,11 +206,11 @@
 
     /* 气泡弹出动画 */
     @keyframes bubble-pop {
-      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-      12%  { opacity: 1; transform: translate(-50%, -60%) scale(1.08); }
-      20%  { transform: translate(-50%, -70%) scale(1); }
-      75%  { opacity: 1; transform: translate(-50%, -85%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, -100%) scale(0.8); }
+      0%   { opacity: 0; transform: translateY(-50%) scale(0.5); }
+      12%  { opacity: 1; transform: translateY(-60%) scale(1.08); }
+      20%  { transform: translateY(-70%) scale(1); }
+      75%  { opacity: 1; transform: translateY(-85%) scale(1); }
+      100% { opacity: 0; transform: translateY(-100%) scale(0.8); }
     }
   </style>
 </head>

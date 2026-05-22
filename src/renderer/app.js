@@ -299,8 +299,8 @@ function sendChatMessage() {
 
   const aiBubble = document.getElementById('ai-bubble');
   aiBubble.textContent = '…';
-  aiBubble.style.left = '50%';
-  aiBubble.style.top = '8%';
+  aiBubble.style.left = '54%';
+  aiBubble.style.top = '18%';
   aiBubble.classList.add('show');
   isWaitingReply = true;
 
@@ -308,14 +308,14 @@ function sendChatMessage() {
 }
 
 // ============================================================
-// AI 回复气泡（长时间显示）
+// AI 回复气泡（长时间显示，在角色右侧）
 // ============================================================
 function showAIBubble(text) {
   const bubble = document.getElementById('ai-bubble');
   if (!bubble) return;
   bubble.textContent = text;
-  bubble.style.left = '50%';
-  bubble.style.top = '8%';
+  bubble.style.left = '54%';
+  bubble.style.top = '18%';
   bubble.classList.add('show');
 
   clearTimeout(bubble._timeout);
@@ -325,15 +325,15 @@ function showAIBubble(text) {
 }
 
 // ============================================================
-// 短语气泡
+// 短语气泡（在角色右侧）
 // ============================================================
 function showBubble(text) {
   const bubble = document.getElementById('reaction-bubble');
   if (!bubble) return;
   bubble.textContent = text;
   bubble.classList.remove('show');
-  bubble.style.left = '50%';
-  bubble.style.top = '10%';
+  bubble.style.left = '54%';
+  bubble.style.top = '18%';
   void bubble.offsetWidth;
   bubble.classList.add('show');
 }
