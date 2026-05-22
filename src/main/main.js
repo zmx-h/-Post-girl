@@ -76,11 +76,11 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: w,
     height: h,
-    x: x,
-    y: y,
+    x: 100,
+    y: 100,
+    show: true,
     alwaysOnTop: true,
     skipTaskbar: false,
-    resizable: false,
     backgroundColor: '#2d2d3f',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -90,22 +90,30 @@ function createWindow() {
     },
   });
 
+  console.log('[主进程] 窗口位置:', 100, 100, '尺寸:', w, h);
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  mainWindow.setVisibleOnAllWorkspaces(true);
 
-  // 捕获渲染进程控制台日志，输出到终端
-  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    const prefix = level === 2 ? '[渲染进程错误]' : level === 3 ? '[渲染进程警告]' : '[渲染进程日志]';
+  // 捕获渲染进程控制台日志
+  mainWindow.webContents.on('console-message', (event, level, message) => {
+    const prefix = level === 2 ? '[渲染错误]' : level === 3 ? '[渲染警告]' : '[渲染日志]';
     console.log(`${prefix} ${message}`);
   });
-
-  // 捕获渲染进程未捕获的错误
-  mainWindow.webContents.on('unhandled-rejection', (event, reason) => {
-    console.error('[渲染进程未捕获Promise错误]', reason);
+  mainWindow.webContents.on('unhandled-rejection', (_event, reason) => {
+    console.error('[渲染Promise错误]', reason);
   });
 
-  // 临时：如果带 --dev 标志才打开 DevTools
+  // 页面加载完成后主动显示
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('[主进程] 页面加载完成');
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
+  mainWindow.on('ready-to-show', () => {
+    console.log('[主进程] 窗口准备就绪');
+  });
+
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
