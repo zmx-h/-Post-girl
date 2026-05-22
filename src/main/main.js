@@ -4,29 +4,41 @@ const fs = require('fs');
 const https = require('https');
 const Store = require('electron-store');
 
-// 禁用 GPU 加速以排查渲染问题
+// === 顶层错误捕获（必须在任何其他代码之前） ===
+process.on('uncaughtException', (err) => {
+  console.error('[顶层异常]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[顶层Promise拒绝]', reason);
+});
+console.log('[主进程] main.js 开始执行');
+
+console.log('[主进程] 禁用硬件加速...');
 app.disableHardwareAcceleration();
+console.log('[主进程] 硬件加速已禁用');
 
 // 加载用户配置
 const configPath = path.join(__dirname, '..', '..', 'config.json');
 const configExamplePath = path.join(__dirname, '..', '..', 'config.example.json');
+console.log('[主进程] 配置路径:', configPath);
 
 let config;
 if (fs.existsSync(configPath)) {
   config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  console.log('[主进程] 配置加载成功');
 } else {
-  console.error('config.json 不存在！请复制 config.example.json 为 config.json 并填写配置。');
-  // 尝试加载示例配置作为后备
+  console.error('config.json 不存在！');
   if (fs.existsSync(configExamplePath)) {
     config = JSON.parse(fs.readFileSync(configExamplePath, 'utf8'));
-    console.warn('已使用 config.example.json 作为后备配置，但 API 密钥未设置，AI 对话功能将不可用。');
+    console.warn('已使用 config.example.json');
   } else {
-    console.error('config.example.json 也不存在！请检查项目文件完整性。');
+    console.error('config.example.json 也不存在！');
     app.quit();
     return;
   }
 }
 
+console.log('[主进程] 初始化 electron-store...');
 const store = new Store({
   defaults: {
     winX: null,
@@ -34,11 +46,15 @@ const store = new Store({
     winScale: 1.0,
   },
 });
+console.log('[主进程] electron-store 初始化完成');
 
 let mainWindow = null;
 let winScale = store.get('winScale', 1.0);
+console.log('[主进程] winScale:', winScale);
+console.log('[主进程] 即将定义窗口函数和 IPC 处理器');
 
 function createWindow() {
+  console.log('[主进程] createWindow 开始执行');
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   const baseW = config.window.baseWidth;
   const baseH = config.window.baseHeight;
@@ -84,6 +100,7 @@ function createWindow() {
     backgroundColor: '#2d2d3f',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: false,
@@ -247,33 +264,23 @@ ipcMain.on('chat-send', (event, userMessage) => {
   req.end();
 });
 
-// === 全局错误处理 ===
-process.on('uncaughtException', (err) => {
-  console.error('[未捕获异常]', err);
-});
-process.on('unhandledRejection', (reason) => {
-  console.error('[未处理Promise拒绝]', reason);
-});
-
+console.log('[主进程] 开始 App Lifecycle...');
 // === App Lifecycle ===
-const gotLock = app.requestSingleInstanceLock();
-if (!gotLock) {
+app.requestSingleInstanceLock();
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+  }
+});
+
+app.whenReady()
+  .then(createWindow)
+  .catch((err) => {
+    console.error('[窗口创建失败]', err);
+  });
+
+app.on('window-all-closed', () => {
   app.quit();
-} else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
-    }
-  });
-
-  app.whenReady()
-    .then(createWindow)
-    .catch((err) => {
-      console.error('[窗口创建失败]', err);
-    });
-
-  app.on('window-all-closed', () => {
-    app.quit();
-  });
-}
+});
