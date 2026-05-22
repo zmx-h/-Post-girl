@@ -25,7 +25,7 @@ const MODEL_SCALE = modelConfig ? modelConfig.scale : 0.18;
 const MODEL_ANCHOR_X = modelConfig ? modelConfig.anchorX : 0.5;
 const MODEL_ANCHOR_Y = modelConfig ? modelConfig.anchorY : 0.5;
 const MODEL_POS_RATIO_X = modelConfig ? modelConfig.positionRatioX : 0.5;
-const MODEL_POS_RATIO_Y = modelConfig ? modelConfig.positionRatioY : 0.58;
+const MODEL_POS_RATIO_Y = modelConfig ? modelConfig.positionRatioY : 0.5;
 const BUBBLE_TEXTS = charConfig ? charConfig.bubbleTexts : [];
 const NEGATIVE_KEYWORDS = charConfig ? charConfig.negativeKeywords : [];
 const GREETING_MORNING = charConfig ? charConfig.greetingMorning : null;
@@ -80,6 +80,7 @@ async function loadModel() {
     app.stage.addChild(model);
 
     setupDrag();
+    setupResizeHandle();
     setupGlobalEvents();
     setupChat();
     startIdleTimer();
@@ -126,6 +127,36 @@ function setupDrag() {
   document.addEventListener('mouseup', () => {
     dragStart = { sx: 0, sy: 0 };
     isDragging = false;
+  });
+}
+
+// ============================================================
+// 顶部边缘调整窗口大小
+// ============================================================
+function setupResizeHandle() {
+  const handle = document.getElementById('resize-top');
+  if (!handle) return;
+  let resizing = false;
+  let resizeStart = { sy: 0, startY: 0, startH: 0 };
+
+  handle.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    resizing = true;
+    resizeStart = { sy: e.screenY, startY: e.screenY, startH: window.innerHeight };
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!resizing) return;
+    const dy = resizeStart.sy - e.screenY;
+    const newH = Math.max(200, resizeStart.startH + dy);
+    window.electronAPI.resizeWindow(newH);
+    resizeStart.sy = e.screenY;
+  });
+
+  document.addEventListener('mouseup', () => {
+    resizing = false;
   });
 }
 

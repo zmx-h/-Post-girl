@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   resetPosition: () => ipcRenderer.send('reset-position'),
 
+  resizeWindow: (newHeight) => ipcRenderer.send('window-resize-height', newHeight),
+
   // ---- AI 对话 ----
   sendChat: (message) => ipcRenderer.send('chat-send', message),
 

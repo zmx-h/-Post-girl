@@ -92,8 +92,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: w,
     height: h,
-    x: 100,
-    y: 100,
+    x,
+    y,
     show: true,
     alwaysOnTop: true,
     skipTaskbar: false,
@@ -187,6 +187,15 @@ ipcMain.on('window-scale', (event, scale) => {
   const [x, y] = mainWindow.getPosition();
   mainWindow.setBounds({ width: Math.round(baseW * scale), height: Math.round(baseH * scale), x, y });
   event.sender.send('window-scale-changed', scale);
+});
+
+// === IPC: Resize Height ===
+ipcMain.on('window-resize-height', (event, newHeight) => {
+  if (!mainWindow) return;
+  const [x, y] = mainWindow.getPosition();
+  const baseW = config.window.baseWidth;
+  const w = Math.round(baseW * winScale);
+  mainWindow.setBounds({ width: w, height: Math.round(newHeight), x, y });
 });
 
 // === IPC: Reset Position ===
