@@ -4,6 +4,10 @@ const fs = require('fs');
 const https = require('https');
 const Store = require('electron-store');
 
+// 透明窗口所需的 Chrome 开关（必须在 app.whenReady 之前设置）
+app.commandLine.appendSwitch('enable-transparent-visuals');
+app.commandLine.appendSwitch('disable-gpu');
+
 // 加载用户配置
 const configPath = path.join(__dirname, '..', '..', 'config.json');
 const configExamplePath = path.join(__dirname, '..', '..', 'config.example.json');

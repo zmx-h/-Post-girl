@@ -13,14 +13,14 @@
       overflow: hidden;
       user-select: none;
     }
-    /* 临时调试背景 - 让窗口可见 */
-    body::before {
-      content: '';
+    /* 调试背景 - 让窗口可见 */
+    #debug-bg {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(100, 150, 255, 0.15);
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(100, 150, 255, 0.2);
       pointer-events: none;
-      z-index: -1;
+      z-index: 0;
     }
     #live2d-canvas {
       width: 100%;
@@ -136,6 +136,7 @@
   </style>
 </head>
 <body>
+  <div id="debug-bg"></div>
   <div id="status-text" style="position:fixed;bottom:10px;left:10px;color:#fff;font-size:14px;font-family:sans-serif;z-index:999;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:6px;">启动中…</div>
   <canvas id="live2d-canvas"></canvas>
   <div id="reaction-bubble"></div>
